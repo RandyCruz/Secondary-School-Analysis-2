@@ -1,0 +1,161 @@
+---
+title: "RCruz_MA712AA_HW5"
+output: html_notebook
+---
+
+#Introduction
+This analysis will focus on secondary school absences. Is there a relationship between age, sex, and weekend alcohol consumption and student absences? The homework being used is Homework 5.
+
+```{r, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(Zelig)
+library(texreg)
+library(mvtnorm)
+library(radiant.data)
+library(sjmisc)
+library(lattice)
+```
+
+
+```{r, message=FALSE, warning=FALSE}
+library(texreg)
+library(stargazer)
+library(ggplot2)
+library(ggthemes)
+library(plotly)
+library(Zelig)
+library(devtools)
+```
+
+
+```{r}
+library(readr)
+  student <- read_csv("/Users/cruz/Desktop/students.csv", col_names = TRUE)
+ head(student)
+```
+
+#Linear Regression
+The dependent variable chosen in this analysis explains some of the underlying reason for "absences" in this particular secondary school. The independent variables chosen are age, sex, and Walc(Weekend Student  Alcohol Consumption).
+```{r}
+lm0 <- lm(absences ~ age + sex + Walc, data = student)
+summary(lm0)
+```
+
+#Linear Regression X Interaction
+As observed in the following model, the impact age has on absences is statistically significant. For every year "age" increase, absences go up by (.992).  The data also displays that among sexes, males have (0.91) fewer absences than females in this particular school, it is important to note that this was not statistically significant. The independent variable "Walc" (weekend alcohol consumption) displays that as weekend alcohol consumption rating increased, absences increased by (1.107). Lastly, when the interaction term was introduced (sex*Walc) the data displayed that males who engaged in weekend alcohol consumption were (-0.325) less likely than females who engaged in weekend alcohol consumption to be absent but it is important to note that this interaction was not statistically significant. 
+
+```{r}
+lm1 <- lm(absences ~ age + sex*Walc, data = student)
+summary(lm1)
+```
+#Group-wise summary of dependent variable
+Verifying regression results
+```{r}
+library(magrittr)
+library(dplyr)
+library(sjmisc)
+
+abstudent <- student%>%
+  select(absences, sex, Walc)%>%
+  group_by(sex, Walc)%>%
+  summarise(mean = mean(absences))
+
+head(abstudent)
+```
+
+
+
+```{r, results="asis"}
+library(texreg)
+htmlreg(list(lm0, lm1))
+```
+
+
+
+```{r, message=FALSE, warning=FALSE, results="asis"}
+stargazer(lm0, lm1, type = "html")
+```
+
+
+
+#Purpose of plotting some of the variables
+I went and plotted some of the variables being used to visually understand some of the relationships occuring in this analysis and also to verify visually that the output was correct.
+
+```{r}
+
+student <- student%>%
+  mutate(sex = as.factor(sex))
+
+library(visreg)
+abstudent2 <- lm(absences ~ age + sex + Walc, data=student)
+visreg(abstudent2)
+```
+
+
+
+#Extra Plots X Data Visuals
+As a very visually driven person the purpose of the extra plots is to simply help me visually understand the data and variables I chose for this analysis.
+
+
+#Weekend Alcohol Consumption X Age
+In this graph we see that as the age of the students in this secondary school increases, so does the level of weekend alcohol consumption.
+```{r, message=FALSE, warning=FALSE}
+ggplot(student)+
+  geom_smooth(aes(x = age, y = Walc), color= "cyan", fill = "blue") + geom_smooth(aes(x = age, y = Dalc), color= "aqua marine1", fill = "black") + theme_solarized() 
+ggplotly()
+```
+
+
+#Weekend Alcohol Consumption X Absences
+This graph displays that as weekend alcohol levels increase to around moderate range so do absences, then it begins to taper down interestingly.
+```{r, message=FALSE, warning=FALSE}
+library(ggplot2)
+ggplot(student)+
+  geom_smooth(aes(x = absences, y = Walc), color= "cyan", fill = "blue") + geom_smooth(aes(x = absences, y = Dalc), color= "Aqua Marine1", fill = "black") + theme_dark() + scale_colour_stata()
+ggplotly()
+
+```
+
+```{r}
+plot(absences ~ Walc, data = student)
+plot(absences ~ age, data = student)
+plot(absences ~ sex*Walc, data = student)
+
+
+```
+
+
+
+```{r}
+studentlm <- lm(absences ~ Walc, data = student)
+
+library(visreg)
+visreg(studentlm)
+
+
+```
+
+#Sex Vs Absences
+In this particular secondary school, females tend to be more absent than males.
+```{r, message=FALSE, warning=FALSE}
+ggplot(student)+
+  geom_smooth(aes(x = absences, y = sex), color= "cyan", fill = "blue") + theme_dark() 
+ggplotly()
+```
+
+#Age X Absences
+In this secondary school as age increases so does absences.
+
+```{r, message=FALSE, warning=FALSE}
+g2 <- ggplot(student, mapping = aes(x = age, y = absences))
+
+g2 <- g2 + geom_smooth(color = "aqua marine" , fill = "cyan") + theme_dark()
+
+ggplotly(g2)
+```
+
+
+
+
+
+
